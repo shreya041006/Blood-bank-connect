@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Request Blood</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #e60000;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #e60000;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #cc0000;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Request Blood</h2>
+
+    <input type="number" id="hospital" placeholder="Hospital ID">
+    <input type="number" id="bloodbank" placeholder="Blood Bank ID">
+
+    <select id="group">
+        <option value="A_pos">A+</option>
+        <option value="B_pos">B+</option>
+        <option value="O_pos">O+</option>
+    </select>
+
+    <input type="number" id="qty" placeholder="Quantity">
+
+    <button onclick="send()">Send Request</button>
+</div>
+
+<script>
+async function send() {
+    const data = {
+        hospital_id: document.getElementById("hospital").value,
+        bloodbank_id: document.getElementById("bloodbank").value,
+        blood_group: document.getElementById("group").value,
+        quantity: document.getElementById("qty").value
+    };
+
+    const res = await fetch("http://localhost:5000/request", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+function send() {
+    alert("Button clicked");  // ✅ test
+}
+
+    const msg = await res.text();
+    alert(msg);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hospital Dashboard</title>
+    <style>
+        body { margin: 0; font-family: Arial; }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #e60000;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 { margin-bottom: 30px; }
+
+        .sidebar p {
+            cursor: pointer;
+            margin: 15px 0;
+        }
+
+        .main {
+            flex: 1;
+            padding: 20px;
+            background: #f2f2f2;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px;
+            display: inline-block;
+            width: 200px;
+        }
+        
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h2>Hospital</h2>
+        <p onclick="go('search.html')">Search Blood</p>
+<p onclick="go('request.html')">My Requests</p>
+<p onclick="logout()">Logout</p>
+
+    </div>
+
+    <div class="main">
+    <h2>My Requests</h2>
+    <div id="requests"></div>
+</div>
+</div>
+<button style="background:green; color:white;">Approve</button>
+<button style="background:red; color:white;">Reject</button>
+
+<script>
+function go(page) {
+    window.location.href = page;
+}
+
+async function loadRequests() {
+    const hospital_id = localStorage.getItem("userId");
+
+    const res = await fetch(`http://localhost:5000/requests?hospital_id=${hospital_id}`);
+    const data = await res.json();
+
+    let output = "";
+
+    if (data.length === 0) {
+        output = "<p>No requests yet</p>";
+    } else {
+      data.forEach(r => {
+    output += `
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        Hospital: ${r.hospital_id} <br>
+        Blood: ${r.blood_group} <br>
+        Qty: ${r.quantity} <br>
+        Status: ${r.status} <br><br>
+
+        <button onclick="updateStatus(${r.id}, 'approved')">Approve</button>
+        <button onclick="updateStatus(${r.id}, 'rejected')">Reject</button>
+    </div>`;
+});
+
+    }
+
+    document.getElementById("requests").innerHTML = output;
+}
+
+loadRequests();
+async function updateStatus(id, status) {
+    const res = await fetch("http://localhost:5000/update-request", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id, status })
+    });
+
+    alert(await res.text());
+
+    // reload requests
+    loadRequests();
+}
+
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blood Bank Dashboard</title>
+    <style>
+        body { margin: 0; font-family: Arial; }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: #cc0000;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 { margin-bottom: 30px; }
+
+        .sidebar p {
+            cursor: pointer;
+            margin: 15px 0;
+        }
+
+        .main {
+            flex: 1;
+            padding: 20px;
+            background: #f2f2f2;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px;
+            display: inline-block;
+            width: 200px;
+            cursor: pointer; /* 👈 added */
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h2>Blood Bank</h2>
+        <p>Update Stock</p>
+        <p onclick="loadRequests()">View Requests</p>
+        <p>Logout</p>
+    </div>
+
+    <div class="main" id="mainContent">
+        <h2>Dashboard</h2>
+
+        <div class="card">Update Blood Stock</div>
+        <div class="card" onclick="loadRequests()">Incoming Requests</div>
+    </div>
+</div>
+
+<script>
+function loadRequests() {
+    fetch("http://localhost:3000/requests?hospital_id=1")
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("HTTP error " + res.status);
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log("DATA:", data);
+
+            let content = "<h2>Incoming Requests</h2>";
+
+            if (data.length === 0) {
+                content += "<p>No requests found</p>";
+            } else {
+                data.forEach(req => {
+                    content += `
+                        <div class="card">
+                            Name: ${req.name} <br>
+                            Blood Group: ${req.blood_group}
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById("mainContent").innerHTML = content;
+        })
+        .catch(err => {
+            console.error("FETCH ERROR:", err);
+            alert("Error: " + err.message);
+        });
+}
+
+</script>
+
+</body>
+</html>
+

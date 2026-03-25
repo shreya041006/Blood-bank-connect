@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Incoming Requests</h2>
+
+<div id="data"></div>
+
+<script>
+async function load() {
+    const res = await fetch("http://localhost:5000/requests");
+    const data = await res.json();
+
+    let output = "";
+
+    data.forEach(r => {
+        output += `
+        <div>
+            Hospital: ${r.hospital_id} <br>
+            Blood: ${r.blood_group} <br>
+            Qty: ${r.quantity} <br>
+            Status: ${r.status}
+        </div><hr>`;
+    });
+
+    document.getElementById("data").innerHTML = output;
+}
+
+load();
+</script>
+
+</body>
+</html>

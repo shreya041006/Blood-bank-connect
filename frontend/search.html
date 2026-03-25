@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Blood</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+
+        select, button {
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Search Blood Availability</h2>
+
+<select id="group">
+    <option value="A_pos">A+</option>
+    <option value="A_neg">A-</option>
+    <option value="B_pos">B+</option>
+    <option value="B_neg">B-</option>
+    <option value="O_pos">O+</option>
+    <option value="O_neg">O-</option>
+    <option value="AB_pos">AB+</option>
+    <option value="AB_neg">AB-</option>
+</select>
+
+<button onclick="search()">Search</button>
+
+<div id="result"></div>
+
+<script>
+async function search() {
+    const group = document.getElementById("group").value;
+
+    const res = await fetch(`http://localhost:5000/search?group=${group}`);
+    const data = await res.json();
+
+    let output = "";
+
+    if (data.length === 0) {
+        output = "No blood available";
+    } else {
+        data.forEach(item => {
+            output += `<div class="result">
+                Blood Bank ID: ${item.bloodbank_id} <br>
+                Available Units: ${item[group]}
+            </div>`;
+        });
+    }
+
+    document.getElementById("result").innerHTML = output;
+}
+navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const long = pos.coords.longitude;
+
+    const res = await fetch(
+        `http://localhost:5000/nearest-blood?lat=${lat}&long=${long}&group=A_pos`
+    );
+
+    const data = await res.json();
+
+    console.log(data);
+});
+
+async function findBlood() {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const long = pos.coords.longitude;
+
+        const res = await fetch(
+            `http://localhost:5000/nearest-blood?lat=${lat}&long=${long}&group=A_pos`
+        );
+
+        const data = await res.json();
+
+        console.log(data);
+    });
+}
+
+</script>
+
+</body>
+</html>

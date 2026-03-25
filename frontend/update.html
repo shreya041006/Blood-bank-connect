@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Stock</title>
+</head>
+
+<body>
+
+<h2>Update Blood Stock</h2>
+
+<input type="number" id="id" placeholder="Blood Bank ID"><br>
+
+<input type="number" id="A_pos" placeholder="A+"><br>
+<input type="number" id="B_pos" placeholder="B+"><br>
+<input type="number" id="O_pos" placeholder="O+"><br>
+
+<button onclick="update()">Update</button>
+
+<script>
+async function update() {
+    const data = {
+        bloodbank_id: document.getElementById("id").value,
+        A_pos: document.getElementById("A_pos").value,
+        B_pos: document.getElementById("B_pos").value,
+        O_pos: document.getElementById("O_pos").value
+    };
+
+    const res = await fetch("http://localhost:5000/update-stock", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    });
+
+    const msg = await res.text();
+    alert(msg);
+}
+</script>
+
+</body>
+</html>
