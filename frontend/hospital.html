@@ -67,7 +67,7 @@ function go(page) {
 }
 
 async function loadRequests() {
-    const hospital_id = localStorage.getItem("userId");
+    const hospital_id = localStorage.getItem("user_id");
 
     const res = await fetch(`http://localhost:5000/requests?hospital_id=${hospital_id}`);
     const data = await res.json();

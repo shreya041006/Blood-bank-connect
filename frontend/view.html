@@ -1,55 +1,286 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incoming Requests - Blood Bank Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #cc0000;
+            --primary-hover: #b30000;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.2);
+        }
+
+        .header h2 {
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            border: 1px solid #f1f3f5;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary);
+        }
+
+        .result-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        }
+
+        .hospital-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: var(--text-main);
+        }
+
+        .detail-row {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .status-pending { background: #ffeeba; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            color: white;
+        }
+
+        .btn-accept { background: var(--success); }
+        .btn-accept:hover { background: #218838; }
+        
+        .btn-reject { background: var(--danger); }
+        .btn-reject:hover { background: #c82333; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            background: white;
+            border-radius: 12px;
+            border: 1px dashed #dee2e6;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-main);
+        }
+    </style>
+</head>
 <body>
 
-<h2>Incoming Requests</h2>
+    <div class="header">
+        <h2>Incoming Requests</h2>
+        <a href="bloodbank.html" class="back-btn">
+            <span>⬅</span> Back to Dashboard
+        </a>
+    </div>
 
-<div id="requests"></div>
+    <div class="container">
+        <div id="requests" class="results-grid">
+            <p>Loading requests...</p>
+        </div>
+    </div>
 
-<script>
-async function loadRequests() {
-    const bloodbankId = localStorage.getItem("bloodbank_id");
+    <script>
+        async function loadRequests() {
+            const bloodbankId = localStorage.getItem("user_id");
 
-    const res = await fetch(`http://localhost:5000/bloodbankRequests/${bloodbankId}`);
-    const data = await res.json();
+            if (!bloodbankId) {
+                alert("Session expired. Please login again.");
+                window.location.href = "login.html";
+                return;
+            }
 
-    let html = "";
+            try {
+                // Fix: Correct API endpoint for blood bank requests
+                const res = await fetch(`http://localhost:5000/requests?bloodbank_id=${bloodbankId}`);
+                if (!res.ok) throw new Error("Failed to fetch requests");
+                
+                const data = await res.json();
+                const container = document.getElementById("requests");
 
-    data.forEach(req => {
-        html += `
-            <div class="card">
-                Name: ${req.name} <br>
-                Blood: ${req.blood_group} <br>
-                Quantity: ${req.quantity} <br>
-                Status: ${req.status} <br>
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <h3>No incoming requests</h3>
+                            <p>You have no pending requests at the moment.</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-                <button onclick="update(${req.id}, 'approved')">Accept</button>
-                <button onclick="update(${req.id}, 'rejected')">Reject</button>
-            </div>
-        `;
-    });
+                let html = "";
+                data.forEach(req => {
+                    const isPending = req.status === "pending";
+                    html += `
+                        <div class="result-card">
+                            <h3 class="hospital-name">Hospital ID: ${req.hospital_id}</h3>
+                            <p class="detail-row">🩸 Blood Group: <b>${req.blood_group}</b></p>
+                            <p class="detail-row">📦 Quantity: <b>${req.quantity} Units</b></p>
+                            <div>
+                                <span class="status-badge status-${req.status}">
+                                    ${req.status}
+                                </span>
+                            </div>
+                            
+                            ${isPending ? `
+                            <div class="btn-group">
+                                <button class="action-btn btn-accept" onclick="update(${req.id}, 'approved')">Accept</button>
+                                <button class="action-btn btn-reject" onclick="update(${req.id}, 'rejected')">Reject</button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
 
-    document.getElementById("requests").innerHTML = html;
-}
+                container.innerHTML = html;
 
-async function update(id, status) {
-    const res = await fetch("http://localhost:5000/updateRequest", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            request_id: id,
-            status: status
-        })
-    });
+            } catch (err) {
+                console.error(err);
+                document.getElementById("requests").innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <h3>Error loading requests</h3>
+                        <p>Please ensure the backend server is running.</p>
+                    </div>
+                `;
+            }
+        }
 
-    const result = await res.json();
-    alert(result.message);
+        async function update(id, status) {
+            try {
+                // Fix: Correct API endpoint for updating requests
+                const res = await fetch("http://localhost:5000/update-request", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        id: id,
+                        status: status
+                    })
+                });
 
-    loadRequests();
-}
+                const result = await res.json();
+                alert(result.message);
 
-loadRequests();
-</script>
+                // Reload the list to reflect changes
+                loadRequests();
+                
+            } catch (err) {
+                console.error(err);
+                alert("Error updating request status.");
+            }
+        }
 
+        // Load on start
+        loadRequests();
+    </script>
 </body>
 </html>

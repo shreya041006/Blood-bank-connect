@@ -67,8 +67,8 @@ app.post("/login", (req, res) => {
 });
 
 // ---------------- SEARCH BLOOD ----------------
-app.get("/nearest-blood", (req, res) => {
-    const { user_id, group } = req.query;
+app.get("/search-blood", (req, res) => {
+    const { city, state, group } = req.query;
 
     const map = {
         "A+": "A_pos", "A-": "A_neg",
@@ -78,33 +78,31 @@ app.get("/nearest-blood", (req, res) => {
     };
 
     const column = map[group];
-    if (!column) return res.status(400).send("Invalid group");
 
-    // Step 1: get city & state of logged-in user
-    const getUser = "SELECT city, state FROM users WHERE id = ?";
+    if (!column) return res.send([]);
 
-    db.query(getUser, [user_id], (err, userResult) => {
-        if (err || userResult.length === 0) {
-            return res.send("User not found");
+    const sql = `
+    SELECT 
+        u.id,
+        u.name,
+        u.city,
+        u.state,
+        b.${column} AS available
+    FROM users u
+    JOIN bloodstock b ON u.id = b.bloodbank_id
+    WHERE u.role = 'bloodbank'
+    AND LOWER(u.city) = LOWER(?)
+    AND LOWER(u.state) = LOWER(?)
+    AND b.${column} > 0
+    `;
+
+    db.query(sql, [city, state], (err, result) => {
+        if (err) {
+            console.log(err);
+            return res.send([]);
         }
 
-        const { city, state } = userResult[0];
-
-        // Step 2: find blood banks
-        const sql = `
-        SELECT u.id, u.name, u.city, u.state, b.${column}
-        FROM users u
-        JOIN bloodstock b ON u.id = b.bloodbank_id
-        WHERE u.role = 'bloodbank'
-        AND u.city = ?
-        AND u.state = ?
-        AND b.${column} > 0
-        `;
-
-        db.query(sql, [city, state], (err, result) => {
-            if (err) return res.send("Error");
-            res.json(result);
-        });
+        res.json(result);
     });
 });
 
@@ -246,6 +244,10 @@ app.post("/update-request", (req, res) => {
         `;
 
         db.query(sql, [reqData.quantity, reqData.bloodbank_id, reqData.quantity], (err, result2) => {
+            if (err) {
+                console.error("DB Update Error:", err);
+                return res.status(500).json({ message: "Database error during stock update" });
+            }
 
             if (result2.affectedRows === 0) {
                 return res.json({ message: "Not enough stock" });
