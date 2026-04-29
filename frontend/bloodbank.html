@@ -48,15 +48,15 @@
     <div class="sidebar">
         <h2>Blood Bank</h2>
         <p>Update Stock</p>
-        <p onclick="loadRequests()">View Requests</p>
+        <p onclick="go('view.html')">View Requests</p>
         <p>Logout</p>
     </div>
 
     <div class="main" id="mainContent">
         <h2>Dashboard</h2>
 
-        <div class="card">Update Blood Stock</div>
-        <div class="card" onclick="loadRequests()">Incoming Requests</div>
+        <div class="card" onclick ="go('update.html')">Update Stock</div>
+        <div class="card" onclick="go('view.html')">Incoming Requests</div>
     </div>
 </div>
 
@@ -95,6 +95,11 @@ function loadRequests() {
         });
 }
 
+</script>
+<script>
+function go(page) {
+    window.location.href = page;
+}
 </script>
 
 </body>

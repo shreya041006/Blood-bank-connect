@@ -11,8 +11,13 @@
 <input type="number" id="id" placeholder="Blood Bank ID"><br>
 
 <input type="number" id="A_pos" placeholder="A+"><br>
+<input type="number" id="A_neg" placeholder="A-"><br>
 <input type="number" id="B_pos" placeholder="B+"><br>
+<input type="number" id="B_neg" placeholder="B-"><br>
 <input type="number" id="O_pos" placeholder="O+"><br>
+<input type="number" id="O_neg" placeholder="O-"><br>
+<input type="number" id="AB_pos" placeholder="AB+"><br>
+<input type="number" id="AB_neg" placeholder="AB-"><br>
 
 <button onclick="update()">Update</button>
 
@@ -21,8 +26,13 @@ async function update() {
     const data = {
         bloodbank_id: document.getElementById("id").value,
         A_pos: document.getElementById("A_pos").value,
+        A_neg: document.getElementById("A_neg").value,
         B_pos: document.getElementById("B_pos").value,
-        O_pos: document.getElementById("O_pos").value
+        B_neg: document.getElementById("B_neg").value,
+        O_pos: document.getElementById("O_pos").value,
+        O_neg: document.getElementById("O_neg").value,
+        AB_pos: document.getElementById("AB_pos").value,
+        AB_neg: document.getElementById("AB_neg").value,
     };
 
     const res = await fetch("http://localhost:5000/update-stock", {

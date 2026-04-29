@@ -91,7 +91,6 @@
         </p>
     </div>
 </div>
-
 <script>
 async function login() {
     const email = document.getElementById("email").value;
@@ -113,6 +112,10 @@ async function login() {
     const data = await res.json();
 
     if (data.message === "Login successful") {
+
+        // 🔥 ADD THIS LINE
+        localStorage.setItem("user_id", data.id);
+
         alert("Login successful");
 
         if (data.role === "hospital") {
@@ -120,11 +123,14 @@ async function login() {
         } else {
             window.location.href = "bloodbank.html";
         }
+
     } else {
         alert("Invalid credentials");
     }
 }
+</script>
 
+<script>
 // ✅ Navigation FIX
 function goSignup() {
     window.location.href = "signup.html";

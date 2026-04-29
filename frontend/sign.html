@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BloodLink Signup</title>
+    <title>BloodLink</title>
     <style>
         body {
             margin: 0;
@@ -43,58 +43,101 @@
         }
 
         button:hover { background: #cc0000; }
+
+        .link {
+            color: blue;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+        }
     </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h2>Signup</h2>
+    <h2 id="title">Signup</h2>
 
     <input type="text" id="name" placeholder="Name">
     <input type="text" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
-    <input type="hidden" id="latitude">
-<input type="hidden" id="longitude">
-
+    
 
     <select id="role">
         <option value="hospital">Hospital</option>
         <option value="bloodbank">Blood Bank</option>
     </select>
+    <input type="text" id="city" placeholder="City">
+    <input type="text" id="state" placeholder="State">
 
-    <button onclick="signup()">Signup</button>
+    <button onclick="handleSubmit()">Signup</button>
+
+    <span class="link" onclick="toggleMode()">Already have account? Login</span>
 </div>
 
 <script>
-async function signup() {
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
+let isLogin = false;
 
-    const res = await fetch("http://localhost:5000/signup", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ name, email, password, role })
-    });
+// 🔁 Toggle between signup/login
+function toggleMode() {
+    isLogin = !isLogin;
 
-    const data = {
-    name: document.getElementById("name").value,
-    email: document.getElementById("email").value,
-    password: document.getElementById("password").value,
-    role: document.getElementById("role").value,
-    latitude: document.getElementById("latitude").value,
-    longitude: document.getElementById("longitude").value
-};
+    document.getElementById("title").innerText = isLogin ? "Login" : "Signup";
+    document.querySelector("button").innerText = isLogin ? "Login" : "Signup";
+    document.querySelector(".link").innerText = isLogin 
+        ? "Create new account" 
+        : "Already have account? Login";
 
+    document.getElementById("name").style.display = isLogin ? "none" : "block";
+    document.getElementById("role").style.display = isLogin ? "none" : "block";
 }
-</script>
-<script>
-navigator.geolocation.getCurrentPosition((pos) => {
-    document.getElementById("latitude").value = pos.coords.latitude;
-    document.getElementById("longitude").value = pos.coords.longitude;
-});
+
+// 🚀 Handle both signup + login
+async function handleSubmit() {
+    const data = {
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+        role: document.getElementById("role").value,
+        city: document.getElementById("city").value,
+        state: document.getElementById("state").value
+        
+    };
+
+    const url = isLogin 
+        ? "http://localhost:5000/login"
+        : "http://localhost:5000/signup";
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            alert(isLogin ? "Login successful ✅" : "Signup successful ✅");
+
+            // 👉 redirect after login
+            if (isLogin) {
+                if (result.role === "hospital") {
+                    window.location.href = "hospital.html";
+                } else {
+                    window.location.href = "bloodbank.html";
+                }
+            }
+
+        } else {
+            alert(result.message || "Error ❌");
+        }
+
+    } catch (err) {
+        console.error(err);
+        alert("Server not running ❌");
+    }
+}
 </script>
 
 </body>

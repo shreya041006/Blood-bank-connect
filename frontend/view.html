@@ -4,29 +4,51 @@
 
 <h2>Incoming Requests</h2>
 
-<div id="data"></div>
+<div id="requests"></div>
 
 <script>
-async function load() {
-    const res = await fetch("http://localhost:5000/requests");
+async function loadRequests() {
+    const bloodbankId = localStorage.getItem("bloodbank_id");
+
+    const res = await fetch(`http://localhost:5000/bloodbankRequests/${bloodbankId}`);
     const data = await res.json();
 
-    let output = "";
+    let html = "";
 
-    data.forEach(r => {
-        output += `
-        <div>
-            Hospital: ${r.hospital_id} <br>
-            Blood: ${r.blood_group} <br>
-            Qty: ${r.quantity} <br>
-            Status: ${r.status}
-        </div><hr>`;
+    data.forEach(req => {
+        html += `
+            <div class="card">
+                Name: ${req.name} <br>
+                Blood: ${req.blood_group} <br>
+                Quantity: ${req.quantity} <br>
+                Status: ${req.status} <br>
+
+                <button onclick="update(${req.id}, 'approved')">Accept</button>
+                <button onclick="update(${req.id}, 'rejected')">Reject</button>
+            </div>
+        `;
     });
 
-    document.getElementById("data").innerHTML = output;
+    document.getElementById("requests").innerHTML = html;
 }
 
-load();
+async function update(id, status) {
+    const res = await fetch("http://localhost:5000/updateRequest", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            request_id: id,
+            status: status
+        })
+    });
+
+    const result = await res.json();
+    alert(result.message);
+
+    loadRequests();
+}
+
+loadRequests();
 </script>
 
 </body>
