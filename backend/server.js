@@ -66,9 +66,14 @@ app.post("/login", (req, res) => {
     });
 });
 
+
 // ---------------- SEARCH BLOOD ----------------
 app.get("/search-blood", (req, res) => {
     const { city, state, group } = req.query;
+
+    if (!city || !state || !group) {
+        return res.status(400).json({ message: "City, State, and Blood Group are required" });
+    }
 
     const map = {
         "A+": "A_pos", "A-": "A_neg",
@@ -79,7 +84,9 @@ app.get("/search-blood", (req, res) => {
 
     const column = map[group];
 
-    if (!column) return res.send([]);
+    if (!column) {
+        return res.status(400).json({ message: "Invalid blood group" });
+    }
 
     const sql = `
     SELECT 
@@ -98,8 +105,8 @@ app.get("/search-blood", (req, res) => {
 
     db.query(sql, [city, state], (err, result) => {
         if (err) {
-            console.log(err);
-            return res.send([]);
+            console.error("Search SQL Error:", err);
+            return res.status(500).json({ message: "Database error during search" });
         }
 
         res.json(result);
@@ -175,35 +182,53 @@ app.post("/request", (req, res) => {
         res.send("Request Sent Successfully ✅");
     });
 });
-``
+
 
 
 // ---------------- VIEW REQUESTS ----------------
 
-// Hospital view
-app.get("/requests/:hospital_id", (req, res) => {
+// Hospital view (Path param)
+app.get("/requests/hospital/:hospital_id", (req, res) => {
     const id = req.params.hospital_id;
 
     const sql = `
-    SELECT * FROM requests WHERE hospital_id = ?
+    SELECT r.*, u.name as bloodbank_name 
+    FROM requests r
+    JOIN users u ON r.bloodbank_id = u.id
+    WHERE r.hospital_id = ?
+    ORDER BY r.id DESC
     `;
 
     db.query(sql, [id], (err, result) => {
-        if (err) return res.send("Error");
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Database error" });
+        }
         res.json(result);
     });
 });
 
-// Blood bank view
-app.get("/requests", (req, res) => {
+// Blood bank view (Query param)
+app.get("/requests/bloodbank", (req, res) => {
     const bloodbank_id = req.query.bloodbank_id;
 
+    if (!bloodbank_id) {
+        return res.status(400).json({ message: "Blood Bank ID required" });
+    }
+
     const sql = `
-    SELECT * FROM requests WHERE bloodbank_id = ?
+    SELECT r.*, u.name as hospital_name 
+    FROM requests r
+    JOIN users u ON r.hospital_id = u.id
+    WHERE r.bloodbank_id = ?
+    ORDER BY r.id DESC
     `;
 
     db.query(sql, [bloodbank_id], (err, result) => {
-        if (err) return res.send("Error");
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Database error" });
+        }
         res.json(result);
     });
 });
@@ -212,49 +237,60 @@ app.get("/requests", (req, res) => {
 app.post("/update-request", (req, res) => {
     const { id, status } = req.body;
 
+    if (!id || !status) {
+        return res.status(400).json({ message: "ID and Status required" });
+    }
+
     const getRequest = "SELECT * FROM requests WHERE id = ?";
 
     db.query(getRequest, [id], (err, result) => {
-        if (err || result.length === 0)
-            return res.status(500).json({ message: "Request not found" });
+        if (err) return res.status(500).json({ message: "Database error" });
+        if (result.length === 0) return res.status(404).json({ message: "Request not found" });
 
         const reqData = result[0];
 
         if (reqData.status !== "pending") {
-            return res.json({ message: "Already updated" });
+            return res.json({ message: "Request already processed" });
         }
 
         if (status === "rejected") {
             return updateStatus(id, status, res);
         }
 
-        const map = {
-            "A+": "A_pos", "A-": "A_neg",
-            "B+": "B_pos", "B-": "B_neg",
-            "O+": "O_pos", "O-": "O_neg",
-            "AB+": "AB_pos", "AB-": "AB_neg"
-        };
+        if (status === "approved" || status === "accepted") {
+            const finalStatus = "approved";
+            const map = {
+                "A+": "A_pos", "A-": "A_neg",
+                "B+": "B_pos", "B-": "B_neg",
+                "O+": "O_pos", "O-": "O_neg",
+                "AB+": "AB_pos", "AB-": "AB_neg"
+            };
 
-        const column = map[reqData.blood_group];
+            const column = map[reqData.blood_group];
 
-        const sql = `
-        UPDATE bloodstock
-        SET ${column} = ${column} - ?
-        WHERE bloodbank_id = ? AND ${column} >= ?
-        `;
+            if (!column) return res.status(400).json({ message: "Invalid blood group" });
 
-        db.query(sql, [reqData.quantity, reqData.bloodbank_id, reqData.quantity], (err, result2) => {
-            if (err) {
-                console.error("DB Update Error:", err);
-                return res.status(500).json({ message: "Database error during stock update" });
-            }
+            const sql = `
+            UPDATE bloodstock
+            SET ${column} = ${column} - ?
+            WHERE bloodbank_id = ? AND ${column} >= ?
+            `;
 
-            if (result2.affectedRows === 0) {
-                return res.json({ message: "Not enough stock" });
-            }
+            db.query(sql, [reqData.quantity, reqData.bloodbank_id, reqData.quantity], (err, result2) => {
+                if (err) {
+                    console.error("DB Update Error:", err);
+                    return res.status(500).json({ message: "Database error during stock update" });
+                }
 
-            updateStatus(id, status, res);
-        });
+                if (result2.affectedRows === 0) {
+                    return res.json({ message: "Not enough stock available" });
+                }
+
+                updateStatus(id, finalStatus, res);
+            });
+        } else {
+            res.status(400).json({ message: "Invalid status value" });
+        }
     });
 });
 
@@ -263,8 +299,11 @@ function updateStatus(id, status, res) {
     const sql = "UPDATE requests SET status=? WHERE id=?";
 
     db.query(sql, [status, id], (err) => {
-        if (err) return res.send("Error updating status");
-        res.json({ message: "Request " + status });
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Error updating request status" });
+        }
+        res.json({ message: "Request " + status + " successfully" });
     });
 }
 
@@ -272,3 +311,4 @@ function updateStatus(id, status, res) {
 app.listen(5000, () => {
     console.log("Server running on port 5000");
 });
+
