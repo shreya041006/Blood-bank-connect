@@ -201,8 +201,7 @@
             }
 
             try {
-                // Fix: Correct API endpoint for blood bank requests
-                const res = await fetch(`http://localhost:5000/requests?bloodbank_id=${bloodbankId}`);
+                const res = await fetch(`http://localhost:5000/requests/bloodbank?bloodbank_id=${bloodbankId}`);
                 if (!res.ok) throw new Error("Failed to fetch requests");
                 
                 const data = await res.json();
@@ -223,7 +222,7 @@
                     const isPending = req.status === "pending";
                     html += `
                         <div class="result-card">
-                            <h3 class="hospital-name">Hospital ID: ${req.hospital_id}</h3>
+                            <h3 class="hospital-name">${req.hospital_name}</h3>
                             <p class="detail-row">🩸 Blood Group: <b>${req.blood_group}</b></p>
                             <p class="detail-row">📦 Quantity: <b>${req.quantity} Units</b></p>
                             <div>
@@ -257,7 +256,6 @@
 
         async function update(id, status) {
             try {
-                // Fix: Correct API endpoint for updating requests
                 const res = await fetch("http://localhost:5000/update-request", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},

@@ -122,6 +122,7 @@ async function handleSubmit() {
 
             // 👉 redirect after login
             if (isLogin) {
+                localStorage.setItem("user_id", result.id);
                 if (result.role === "hospital") {
                     window.location.href = "hospital.html";
                 } else {
@@ -134,9 +135,10 @@ async function handleSubmit() {
         }
 
     } catch (err) {
-        console.error(err);
-        alert("Server not running ❌");
-    }
+    console.error("REAL ERROR:", err);
+    alert("Cannot connect to backend ❌");
+}
+
 }
 </script>
 

@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Hospital Dashboard</title>
     <style>
-        body { margin: 0; font-family: Arial; }
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
 
         .container {
             display: flex;
@@ -17,7 +21,9 @@
             padding: 20px;
         }
 
-        .sidebar h2 { margin-bottom: 30px; }
+        .sidebar h2 {
+            margin-bottom: 30px;
+        }
 
         .sidebar p {
             cursor: pointer;
@@ -33,86 +39,72 @@
         .card {
             background: white;
             padding: 20px;
-            border-radius: 8px;
-            margin: 10px;
+            border-radius: 12px;
+            margin: 15px;
             display: inline-block;
-            width: 200px;
+            width: 250px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            vertical-align: top;
+            text-align: left;
         }
-        
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #e60000;
+        }
+
+        .dashboard-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body>
 
-<div class="container">
-    <div class="sidebar">
-        <h2>Hospital</h2>
-        <p onclick="go('search.html')">Search Blood</p>
-<p onclick="go('hospital_requets.html')">My Requests</p>
-<p onclick="logout()">Logout</p>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Hospital</h2>
+            <p onclick="go('search.html')">Search Blood</p>
+            <p onclick="go('hospital_requets.html')">My Requests</p>
+            <p onclick="logout()">Logout</p>
 
+        </div>
+
+        <div class="main">
+            <h2>Hospital Dashboard</h2>
+            <p>Welcome to the Hospital Dashboard. Use the cards below or the sidebar to navigate.</p>
+
+            <div class="dashboard-cards">
+                <div class="card" onclick="go('search.html')">
+                    <h3>Search Blood</h3>
+                </div>
+                <div class="card" onclick="go('hospital_requets.html')">
+                    <h3>My Requests</h3>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="main">
-    <h2>My Requests</h2>
-    <div id="requests"></div>
-</div>
-</div>
-<button style="background:green; color:white;">Approve</button>
-<button style="background:red; color:white;">Reject</button>
+    <script>
+        function go(page) {
+            window.location.href = page;
+        }
 
-<script>
-function go(page) {
-    window.location.href = page;
-}
-
-async function loadRequests() {
-    const hospital_id = localStorage.getItem("user_id");
-
-    const res = await fetch(`http://localhost:5000/requests?hospital_id=${hospital_id}`);
-    const data = await res.json();
-
-    let output = "";
-
-    if (data.length === 0) {
-        output = "<p>No requests yet</p>";
-    } else {
-      data.forEach(r => {
-    output += `
-    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-        Hospital: ${r.hospital_id} <br>
-        Blood: ${r.blood_group} <br>
-        Qty: ${r.quantity} <br>
-        Status: ${r.status} <br><br>
-
-        <button onclick="updateStatus(${r.id}, 'approved')">Approve</button>
-        <button onclick="updateStatus(${r.id}, 'rejected')">Reject</button>
-    </div>`;
-});
-
-    }
-
-    document.getElementById("requests").innerHTML = output;
-}
-
-loadRequests();
-async function updateStatus(id, status) {
-    const res = await fetch("http://localhost:5000/update-request", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ id, status })
-    });
-
-    alert(await res.text());
-
-    // reload requests
-    loadRequests();
-}
-
-</script>
-
-
+        function logout() {
+            localStorage.removeItem("user_id");
+            window.location.href = "login.html";
+        }
+    </script>
 </body>
+
 </html>

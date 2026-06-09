@@ -67,9 +67,13 @@ function goBack() {
 async function loadRequests() {
     const hospitalId = localStorage.getItem("user_id");
 
+    if (!hospitalId) {
+        window.location.href = "login.html";
+        return;
+    }
 
     try {
-        const res = await fetch(`http://localhost:5000/requests/${hospitalId}`);
+        const res = await fetch(`http://localhost:5000/requests/hospital/${hospitalId}`);
         const data = await res.json();
 
         let html = "";
@@ -80,8 +84,9 @@ async function loadRequests() {
             data.forEach(req => {
                 html += `
                     <div class="card">
-                        <p><b>Patient Name:</b> ${req.name}</p>
+                        <p><b>Blood Bank:</b> ${req.bloodbank_name}</p>
                         <p><b>Blood Group:</b> ${req.blood_group}</p>
+                        <p><b>Quantity:</b> ${req.quantity} Units</p>
                         <p class="status ${req.status}">
                             Status: ${req.status}
                         </p>

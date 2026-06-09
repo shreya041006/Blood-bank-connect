@@ -299,7 +299,10 @@
                     `http://localhost:5000/search-blood?city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}&group=${encodeURIComponent(group)}`
                 );
 
-                if (!res.ok) throw new Error("Network response was not ok");
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ message: "Unknown error" }));
+                    throw new Error(errorData.message || `Server returned ${res.status}`);
+                }
                 
                 const data = await res.json();
                 const container = document.getElementById("result");
